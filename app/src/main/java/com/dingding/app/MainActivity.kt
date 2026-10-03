@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +36,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dingding.app.ui.theme.DingDingTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
@@ -69,7 +74,11 @@ fun HomeScreen(
     onAddPerson: () -> Unit
 ) {
     val context = LocalContext.current
-    var rules by remember { mutableStateOf(RuleRepository.getRules()) }
+    var rules by remember { mutableStateOf<List<NotificationRule>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        rules = RuleRepository.getRules(context)
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -152,8 +161,13 @@ fun HomeScreen(
                                 Spacer(modifier = Modifier.height(8.dp))
                                 OutlinedButton(
                                     onClick = {
-                                        RuleRepository.deleteRule(rule.id)
-                                        rules = RuleRepository.getRules()
+                                        CoroutineScope(Dispatchers.IO).launch {
+                                            RuleRepository.deleteRule(context, rule.id)
+                                            val updated = RuleRepository.getRules(context)
+                                            withContext(Dispatchers.Main) {
+                                                rules = updated
+                                            }
+                                        }
                                     }
                                 ) {
                                     Text("Delete")
@@ -180,6 +194,7 @@ fun HomeScreen(
 fun AddPersonScreen(
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     var personName by remember { mutableStateOf("") }
     var selectedApp by remember { mutableStateOf(SupportedApps.apps.first()) }
     var appMenuExpanded by remember { mutableStateOf(false) }
@@ -260,15 +275,20 @@ fun AddPersonScreen(
             Button(
                 onClick = {
                     if (personName.isNotBlank()) {
-                        RuleRepository.addRule(
-                            NotificationRule(
-                                appName = selectedApp.name,
-                                packageName = selectedApp.packageName,
-                                personName = personName.trim(),
-                                soundName = "Default"
+                        CoroutineScope(Dispatchers.IO).launch {
+                            RuleRepository.addRule(
+                                context,
+                                NotificationRule(
+                                    appName = selectedApp.name,
+                                    packageName = selectedApp.packageName,
+                                    personName = personName.trim(),
+                                    soundName = "Default"
+                                )
                             )
-                        )
-                        onBack()
+                            withContext(Dispatchers.Main) {
+                                onBack()
+                            }
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f)

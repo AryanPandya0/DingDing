@@ -23,8 +23,9 @@ class NotificationListener : NotificationListenerService() {
         val personName = data.title ?: ""
 
         val rule = RuleRepository.findRule(
+            applicationContext,
             packageName = data.packageName,
-            personName = personName
+            identifier = personName
         )
 
         if (rule != null) {
