@@ -19,14 +19,14 @@ object DiscordIdentityResolver : AppIdentityResolver {
     }
 
     override fun getObservedPeople(context: Context): List<AppIdentity> {
-        return ObservedMetadataRepository.getObservedPeople(packageName)
+        return ObservedMetadataRepository.getObservedPeople(context, packageName)
     }
 
     override fun getGroups(context: Context): List<AppIdentity> {
-        return ObservedMetadataRepository.getObservedGroups(packageName)
+        return ObservedMetadataRepository.getGroups(context, packageName)
     }
 
-    override fun processNotification(sbn: StatusBarNotification): ParsedNotification? {
+    override fun processNotification(context: Context, sbn: StatusBarNotification): ParsedNotification? {
         val extras = sbn.notification.extras
         val title = extras.getString(Notification.EXTRA_TITLE) ?: return null
         val conversationTitle = extras.getString(Notification.EXTRA_CONVERSATION_TITLE)
@@ -37,9 +37,9 @@ object DiscordIdentityResolver : AppIdentityResolver {
         val senderId = senderName.lowercase()
 
         if (isGroup && groupName != null) {
-            ObservedMetadataRepository.recordGroup(packageName, groupName.lowercase(), groupName)
+            ObservedMetadataRepository.recordGroup(context, packageName, groupName.lowercase(), groupName)
         } else {
-            ObservedMetadataRepository.recordPerson(packageName, senderId, senderName)
+            ObservedMetadataRepository.recordPerson(context, packageName, senderId, senderName)
         }
 
         return ParsedNotification(

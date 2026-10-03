@@ -23,7 +23,7 @@ class NotificationListener : NotificationListenerService() {
             return
         }
 
-        val parsed = resolver.processNotification(sbn) ?: return
+        val parsed = resolver.processNotification(applicationContext, sbn) ?: return
 
         val deduplicationKey = "${sbn.packageName}_${sbn.id}_${sbn.tag ?: ""}_${sbn.postTime}_${parsed.senderId}"
 
@@ -74,7 +74,6 @@ class NotificationListener : NotificationListenerService() {
                 mediaPlayer.setDataSource(applicationContext, uri)
             } else {
                 val alertUri: Uri = when (fallbackSoundName) {
-                    "Chime" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                     "Alarm" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                     else -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 }

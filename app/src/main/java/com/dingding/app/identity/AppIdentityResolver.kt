@@ -17,6 +17,6 @@ interface AppIdentityResolver {
     fun searchPeople(context: Context, query: String): List<AppIdentity>
     fun getObservedPeople(context: Context): List<AppIdentity>
     fun getGroups(context: Context): List<AppIdentity>
-    fun processNotification(sbn: StatusBarNotification): ParsedNotification?
+    fun processNotification(context: Context, sbn: StatusBarNotification): ParsedNotification?
     fun isRelevantNotification(sbn: StatusBarNotification): Boolean
 }

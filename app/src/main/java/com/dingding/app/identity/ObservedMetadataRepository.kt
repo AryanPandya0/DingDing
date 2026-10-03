@@ -1,38 +1,95 @@
 package com.dingding.app.identity
 
+import android.content.Context
+import com.dingding.app.data.DingDingDatabase
+import com.dingding.app.data.ObservedEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+
 object ObservedMetadataRepository {
-    private val observedPeople = mutableMapOf<String, MutableMap<String, AppIdentity>>()
-    private val observedGroups = mutableMapOf<String, MutableMap<String, AppIdentity>>()
+    private var db: DingDingDatabase? = null
 
-    fun recordPerson(packageName: String, id: String, name: String) {
+    fun init(context: Context) {
+        if (db == null) {
+            db = DingDingDatabase.getDatabase(context.applicationContext)
+        }
+    }
+
+    fun recordPerson(context: Context, packageName: String, id: String, name: String) {
         if (name.isBlank()) return
-        val appMap = observedPeople.getOrPut(packageName) { mutableMapOf() }
-        appMap[id] = AppIdentity(
-            id = id,
-            displayName = name.trim(),
-            type = IdentityType.PERSON,
-            packageName = packageName,
-            isMetadataBased = true
-        )
+        init(context)
+        try {
+            runBlocking(Dispatchers.IO) {
+                db?.observedDao()?.insertObserved(
+                    ObservedEntity(
+                        packageName = packageName,
+                        identityId = id,
+                        displayName = name.trim(),
+                        identityType = "PERSON",
+                        timestamp = System.currentTimeMillis()
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
     }
 
-    fun recordGroup(packageName: String, id: String, name: String) {
+    fun recordGroup(context: Context, packageName: String, id: String, name: String) {
         if (name.isBlank()) return
-        val appMap = observedGroups.getOrPut(packageName) { mutableMapOf() }
-        appMap[id] = AppIdentity(
-            id = id,
-            displayName = name.trim(),
-            type = IdentityType.GROUP,
-            packageName = packageName,
-            isMetadataBased = true
-        )
+        init(context)
+        try {
+            runBlocking(Dispatchers.IO) {
+                db?.observedDao()?.insertObserved(
+                    ObservedEntity(
+                        packageName = packageName,
+                        identityId = id,
+                        displayName = name.trim(),
+                        identityType = "GROUP",
+                        timestamp = System.currentTimeMillis()
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
     }
 
-    fun getObservedPeople(packageName: String): List<AppIdentity> {
-        return observedPeople[packageName]?.values?.sortedBy { it.displayName } ?: emptyList()
+    fun getObservedPeople(context: Context, packageName: String): List<AppIdentity> {
+        init(context)
+        return try {
+            runBlocking(Dispatchers.IO) {
+                db?.observedDao()?.getObserved(packageName, "PERSON")?.map {
+                    AppIdentity(
+                        id = it.identityId,
+                        displayName = it.displayName,
+                        type = IdentityType.PERSON,
+                        packageName = it.packageName,
+                        isMetadataBased = true
+                    )
+                } ?: emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
-    fun getObservedGroups(packageName: String): List<AppIdentity> {
-        return observedGroups[packageName]?.values?.sortedBy { it.displayName } ?: emptyList()
+    fun getGroups(context: Context, packageName: String): List<AppIdentity> {
+        init(context)
+        return try {
+            runBlocking(Dispatchers.IO) {
+                db?.observedDao()?.getObserved(packageName, "GROUP")?.map {
+                    AppIdentity(
+                        id = it.identityId,
+                        displayName = it.displayName,
+                        type = IdentityType.GROUP,
+                        packageName = it.packageName,
+                        isMetadataBased = true
+                    )
+                } ?: emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 }

@@ -5,9 +5,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [RuleEntity::class], version = 1, exportSchema = false)
+@Database(entities = [RuleEntity::class, ObservedEntity::class], version = 2, exportSchema = false)
 abstract class DingDingDatabase : RoomDatabase() {
     abstract fun ruleDao(): RuleDao
+    abstract fun observedDao(): ObservedDao
 
     companion object {
         @Volatile
